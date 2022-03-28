@@ -85,7 +85,7 @@ def ParseVoteDiv(voteDiv):
     newDiv = ListEntry()
     newDiv.votes = int(voteDiv.contents[3].text.replace(",", ""))
     newDiv.title = voteDiv.parent.find(class_="lister-item-header").find(["a"]).text.strip()
-    newDiv.year = voteDiv.parent.find(class_="lister-item-header").find(class_="lister-item-year").text.strip()
+    newDiv.year = voteDiv.parent.find(class_="lister-item-header").find(class_="lister-item-year").text.strip().replace("(", "").replace(")", "")
     newDiv.rating = voteDiv.parent.find(class_="inline-block ratings-imdb-rating").find(["strong"]).text
     newDiv.genres = voteDiv.parent.find(class_="genre").text.strip().split(",")
     return newDiv

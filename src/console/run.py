@@ -53,7 +53,7 @@ def RunForXPages():
                 PrettifyListItemLine(listItem)
 
 def PrettifyListItemLine(listItem):
-    print("\t% s | % s (IMDB: % s) [% s]" % (listItem.title, listItem.votes, listItem.rating, ", ".join(listItem.genres)))
+    print("\t% s | % s (IMDB: % s) [% s] (% s)" % (listItem.title, listItem.votes, listItem.rating, ", ".join(listItem.genres), listItem.year))
 
 def CalculateBaseUrl(type = "title", genre = "sci-fi", sort = "user_rating", order = "desc"):
     baseUrl = "https://www.imdb.com/search"
@@ -85,9 +85,12 @@ def ParseVoteDiv(voteDiv):
     newDiv = ListEntry()
     newDiv.votes = int(voteDiv.contents[3].text.replace(",", ""))
     newDiv.title = voteDiv.parent.find(class_="lister-item-header").find(["a"]).text.strip()
+    newDiv.year = voteDiv.parent.find(class_="lister-item-header").find(class_="lister-item-year").text.strip()
     newDiv.rating = voteDiv.parent.find(class_="inline-block ratings-imdb-rating").find(["strong"]).text
     newDiv.genres = voteDiv.parent.find(class_="genre").text.strip().split(",")
     return newDiv
 
 if __name__ == '__main__':
     run()
+
+# tvMovie, video, tcSeries, movie, short, tvMiniSeries, tvShort, tvSpecial

@@ -4,9 +4,36 @@ import requests
 from models.listentry import ListEntry
 import constants as c
 
-
 def run():
-    url = "https://www.imdb.com/search/title/?genres=sci-fi&sort=user_rating,desc&explore=title_type,genres&ref_=adv_nxt"
+    RunUntilResultCountMet()
+
+def RunUntilResultCountMet():
+    url = CalculateBaseUrl()
+
+    targetCount = 10
+    voteThreshold: int = 1000
+    uniqueEntries = []
+
+    currentPage = 1
+    while(len(uniqueEntries) < targetCount) :
+        print("Parsing page % s | Unique Entries found so far : % s" % (currentPage, len(uniqueEntries)))
+        startPosition = CalculateStartPosition(currentPage, 1)
+        doc = GetDocument(url + "&start=% s" % startPosition)
+        parsedList = ParseListPage(doc)
+
+        for entry in parsedList:
+            if (int(entry.votes) >= voteThreshold and
+                entry.title not in [x.title for x in uniqueEntries]):
+                    uniqueEntries.append(entry)
+        
+        currentPage += 1
+    
+    for entry in uniqueEntries:
+        PrettifyListItemLine(entry)
+        
+
+def RunForXPages():
+    url = CalculateBaseUrl()
     pageStart = 1
     pageEnd = 3
     pageRange = pageEnd - pageStart
@@ -23,7 +50,16 @@ def run():
         for listItem in parsedList:
             if listItem.title not in [x.title for x in uniqueEntries]:
                 uniqueEntries.append(listItem)
-                print("\t% s | % s (IMDB: % s)" % (listItem.title, listItem.votes, listItem.rating))
+                PrettifyListItemLine(listItem)
+
+def PrettifyListItemLine(listItem):
+    print("\t% s | % s (IMDB: % s) [% s]" % (listItem.title, listItem.votes, listItem.rating, ", ".join(listItem.genres)))
+
+def CalculateBaseUrl(type = "title", genre = "sci-fi", sort = "user_rating", order = "desc"):
+    baseUrl = "https://www.imdb.com/search"
+    sort = "sort=% s,% s" % (sort, order)
+    genres = "genres=% s" % (genre)
+    return baseUrl + "/% s/?% s&% s&explore=title_type,genres" % (type, genres, sort)
 
 def CalculateStartPosition(currentPage, pageStart):
     return (currentPage * 50) + (pageStart * 50) + 1
@@ -47,9 +83,10 @@ def GetVoteDivs(doc: BeautifulSoup):
 
 def ParseVoteDiv(voteDiv):
     newDiv = ListEntry()
-    newDiv.votes = voteDiv.contents[3].text
+    newDiv.votes = int(voteDiv.contents[3].text.replace(",", ""))
     newDiv.title = voteDiv.parent.find(class_="lister-item-header").find(["a"]).text.strip()
     newDiv.rating = voteDiv.parent.find(class_="inline-block ratings-imdb-rating").find(["strong"]).text
+    newDiv.genres = voteDiv.parent.find(class_="genre").text.strip().split(",")
     return newDiv
 
 if __name__ == '__main__':
